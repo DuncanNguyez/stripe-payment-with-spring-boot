@@ -8,3 +8,7 @@ spring:
     database: ${MONGODB_DATABASE}
     username: ${MONGODB_USERNAME}
     password: ${MONGODB_PASSWORD}
+    authentication-database: admin
+application:
+  stripe:
+    api-key: ${STRIPE_API_KEY}
