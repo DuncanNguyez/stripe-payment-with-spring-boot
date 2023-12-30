@@ -6,18 +6,23 @@ import StripePaymentDemo.customers.CustomerRepository;
 import StripePaymentDemo.customers.Shipping;
 import StripePaymentDemo.products.Product;
 import StripePaymentDemo.products.ProductRepository;
+import StripePaymentDemo.tax.TaxRate;
+import StripePaymentDemo.tax.TaxRateRepository;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.PriceCreateParams;
 import com.stripe.param.ProductCreateParams;
+import com.stripe.param.TaxRateCreateParams;
 import com.stripe.param.common.EmptyParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,15 +37,52 @@ public class ExampleObject {
     private CustomerRepository customerRepository;
 
     @Autowired
+    TaxRateRepository taxRateRepository;
+    @Autowired
     ProductRepository productRepository;
 
     private ExampleObject() {
     }
 
+    @Transactional
     public void init() throws StripeException {
         Stripe.apiKey = stripeApiKey;
         if (productRepository.findAll().isEmpty()) initProducts();
         if (customerRepository.findAll().isEmpty()) initCustomers();
+        if (taxRateRepository.findAll().isEmpty()) initTaxRates();
+    }
+
+    private void initTaxRates() throws StripeException {
+        List<TaxRate> taxRates = new ArrayList<>();
+
+        taxRates.add(taxRateRepository.save(TaxRate.builder()
+                .type(TaxRateCreateParams.TaxType.VAT)
+                .country("US")
+                .state("CA")
+                .description("CA sales tax")
+                .percentage(10L)
+                .displayName("Sales tax")
+                .build()
+        ));
+        for (TaxRate taxRate : taxRates) {
+            initStripeTaxRate(taxRate);
+        }
+
+    }
+
+    private void initStripeTaxRate(TaxRate taxRate) throws StripeException {
+        TaxRateCreateParams params = TaxRateCreateParams.builder()
+                .setCountry(taxRate.getCountry())
+                .setState(taxRate.getState())
+                .setTaxType(taxRate.getType())
+                .setDisplayName(taxRate.getDisplayName())
+                .setPercentage(new BigDecimal(taxRate.getPercentage()))
+                .setDescription(taxRate.getDescription())
+                .setInclusive(false)
+                .build();
+        com.stripe.model.TaxRate stripeTaxRate = com.stripe.model.TaxRate.create(params);
+        taxRate.setStripeId(stripeTaxRate.getId());
+        taxRateRepository.save(taxRate);
     }
 
     private void initProducts() throws StripeException {
@@ -132,7 +174,7 @@ public class ExampleObject {
         ProductCreateParams params = ProductCreateParams.builder()
                 .setName(product.getName())
                 .addImage(product.getId())
-                .putMetadata("id",product.getId())
+                .putMetadata("id", product.getId())
                 .setUrl("https://pawfecthouse.com/products/eat-drink-and-be-merry-dog-personalized-custom-mug-christmas-gift-for-pet-owners-pet-lovers?variant=45134204993768")
                 .build();
         com.stripe.model.Product stripeProduct = com.stripe.model.Product.create(params);
