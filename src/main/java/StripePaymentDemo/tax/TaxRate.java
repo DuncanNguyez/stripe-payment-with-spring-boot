@@ -19,7 +19,7 @@ public class TaxRate {
     private String description;
     private String displayName;
     private String stripeId;
-    private Long percentage;
+    private Double percentage;
     private String state;
     private TaxRateCreateParams.TaxType type;
 }

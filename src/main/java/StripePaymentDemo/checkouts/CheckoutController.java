@@ -2,6 +2,7 @@ package StripePaymentDemo.checkouts;
 
 import StripePaymentDemo.customers.CustomerRepository;
 import StripePaymentDemo.products.ProductRepository;
+import StripePaymentDemo.tax.TaxRateRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -23,31 +24,38 @@ public class CheckoutController {
     private CustomerRepository customerRepository;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private TaxRateRepository taxRateRepository;
 
     @GetMapping("/create")
     public String create() throws StripeException {
         SessionCreateParams params =
                 SessionCreateParams.builder()
-                        .setSuccessUrl("https://localhost/success?id={CHECKOUT_SESSION_ID}")
+                        .setSuccessUrl("https://localhost:8080/success?id={CHECKOUT_SESSION_ID}")
                         .addLineItem(
                                 SessionCreateParams.LineItem.builder()
                                         .setPrice(productRepository.findAll().get(0).getStripePriceIds().get(0))
                                         .setQuantity(2L)
+                                        .addTaxRate(taxRateRepository.findAll().get(0).getStripeId())
                                         .build()
+
                         )
                         .addLineItem(
                                 SessionCreateParams.LineItem.builder()
                                         .setPrice(productRepository.findAll().get(1).getStripePriceIds().get(0))
                                         .setQuantity(2L)
+                                        .addTaxRate(taxRateRepository.findAll().get(0).getStripeId())
                                         .build()
                         )
                         .addLineItem(
                                 SessionCreateParams.LineItem.builder()
                                         .setPrice(productRepository.findAll().get(2).getStripePriceIds().get(0))
                                         .setQuantity(2L)
+                                        .addTaxRate(taxRateRepository.findAll().get(0).getStripeId())
                                         .build()
                         )
-                        .setAutomaticTax(SessionCreateParams.AutomaticTax.builder().setEnabled(true).build())
+
+//                        .setAutomaticTax(SessionCreateParams.AutomaticTax.builder().setEnabled(true).build())
                         .setMode(SessionCreateParams.Mode.PAYMENT)
                         .setCustomer(customerRepository.findAll().get(0).getStripeId())
                         .build();
