@@ -131,6 +131,8 @@ public class ExampleObject {
     private void initStripeProduct(Product product) throws StripeException {
         ProductCreateParams params = ProductCreateParams.builder()
                 .setName(product.getName())
+                .addImage(product.getId())
+                .putMetadata("id",product.getId())
                 .setUrl("https://pawfecthouse.com/products/eat-drink-and-be-merry-dog-personalized-custom-mug-christmas-gift-for-pet-owners-pet-lovers?variant=45134204993768")
                 .build();
         com.stripe.model.Product stripeProduct = com.stripe.model.Product.create(params);
